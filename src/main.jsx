@@ -21,6 +21,11 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
 
+// Import context providers
+import { UserProvider } from './context/UserContext';
+import { AssetProvider } from './context/AssetContext';
+import { AlertProvider } from './context/AlertContext';
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <WagmiProvider config={getDefaultConfig({
@@ -30,7 +35,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     })}>
       <QueryClientProvider client={new QueryClient()}>
         <RainbowKitProvider>
-          <App />
+          <UserProvider>
+            <AssetProvider>
+              <AlertProvider>
+                <App />
+              </AlertProvider>
+            </AssetProvider>
+          </UserProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>

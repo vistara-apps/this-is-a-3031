@@ -1,26 +1,35 @@
 import React, { useState } from 'react';
 import { Search, TrendingUp } from 'lucide-react';
+import { useAsset } from '../context/AssetContext';
 
 const SearchSection = ({ onSearch }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  
+  // Use the asset context for loading state
+  const { isLoading } = useAsset();
 
   const popularAssets = ['ETH', 'WETH', 'USDC', 'DAI', 'WBTC', 'UNI'];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!searchTerm.trim()) return;
+    if (!searchTerm.trim() || isLoading) return;
     
-    setIsLoading(true);
-    await onSearch(searchTerm);
-    setIsLoading(false);
+    try {
+      await onSearch(searchTerm);
+    } catch (error) {
+      console.error('Search error:', error);
+    }
   };
 
   const handlePopularAssetClick = async (asset) => {
+    if (isLoading) return;
+    
     setSearchTerm(asset);
-    setIsLoading(true);
-    await onSearch(asset);
-    setIsLoading(false);
+    try {
+      await onSearch(asset);
+    } catch (error) {
+      console.error('Search error:', error);
+    }
   };
 
   return (
