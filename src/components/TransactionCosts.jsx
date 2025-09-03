@@ -1,13 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { Calculator, Zap, Clock } from 'lucide-react';
+import { Calculator, Zap, Clock, RefreshCw } from 'lucide-react';
 
-const TransactionCosts = ({ selectedAsset }) => {
+const TransactionCosts = ({ selectedAsset, onEstimate }) => {
   const [analysis, setAnalysis] = useState(null);
   const [amount, setAmount] = useState('1');
+  const [isLoading, setIsLoading] = useState(false);
 
+  // Fetch transaction costs when selectedAsset or amount changes
   useEffect(() => {
     if (selectedAsset) {
-      // Simulate cost analysis
+      handleEstimate();
+    }
+  }, [selectedAsset]);
+
+  // Handle estimate button click
+  const handleEstimate = async () => {
+    if (!selectedAsset) return;
+    
+    setIsLoading(true);
+    try {
+      await onEstimate(parseFloat(amount) || 1);
+      
+      // This would be replaced with real data from the context in a full implementation
+      // For now, we'll use mock data for demonstration
       const mockAnalysis = {
         asset: selectedAsset,
         amount: parseFloat(amount) || 1,
@@ -42,8 +57,12 @@ const TransactionCosts = ({ selectedAsset }) => {
         ]
       };
       setAnalysis(mockAnalysis);
+    } catch (error) {
+      console.error('Error estimating transaction costs:', error);
+    } finally {
+      setIsLoading(false);
     }
-  }, [selectedAsset, amount]);
+  };
 
   if (!selectedAsset) {
     return (
@@ -71,6 +90,23 @@ const TransactionCosts = ({ selectedAsset }) => {
             className="w-32 px-3 py-2 bg-white/10 border border-white/20 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
           <span className="text-white">{selectedAsset}</span>
+          <button
+            onClick={handleEstimate}
+            disabled={isLoading}
+            className="flex items-center space-x-2 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white px-4 py-2 rounded-md transition-colors duration-200"
+          >
+            {isLoading ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                <span>Estimating...</span>
+              </>
+            ) : (
+              <>
+                <Calculator className="w-4 h-4" />
+                <span>Estimate</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
 

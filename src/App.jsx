@@ -6,31 +6,33 @@ import AlertsSection from './components/AlertsSection';
 import TransactionCosts from './components/TransactionCosts';
 import { usePaymentContext } from './hooks/usePaymentContext';
 
+// Import context hooks
+import { useAsset } from './context/AssetContext';
+import { useAlerts } from './context/AlertContext';
+
 function App() {
   const [activeTab, setActiveTab] = useState('discover');
-  const [searchResults, setSearchResults] = useState(null);
-  const [selectedAsset, setSelectedAsset] = useState(null);
-  const [alerts, setAlerts] = useState([]);
   const { createSession } = usePaymentContext();
+  
+  // Use context hooks instead of local state
+  const { 
+    searchResults, 
+    selectedAsset, 
+    searchAssetPrices,
+    estimateTransactionCosts 
+  } = useAsset();
+  
+  const { 
+    alerts, 
+    createAlert 
+  } = useAlerts();
 
   const handleSearch = async (asset) => {
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Mock price data
-    const mockResults = {
-      asset: asset.toUpperCase(),
-      prices: [
-        { exchange: 'Uniswap V3', price: 2341.25, volume: '1.2M', change: '+2.1%', available: true },
-        { exchange: 'SushiSwap', price: 2339.80, volume: '850K', change: '+1.8%', available: true },
-        { exchange: 'Curve', price: 2342.10, volume: '2.1M', change: '+2.3%', available: true },
-        { exchange: 'Balancer', price: 2340.50, volume: '650K', change: '+1.9%', available: false },
-        { exchange: '1inch', price: 2338.95, volume: '1.8M', change: '+1.7%', available: true },
-      ]
-    };
-    
-    setSearchResults(mockResults);
-    setSelectedAsset(asset.toUpperCase());
+    try {
+      await searchAssetPrices(asset);
+    } catch (error) {
+      console.error('Search failed:', error);
+    }
   };
 
   const handlePriceComparisonPayment = async () => {
@@ -56,18 +58,28 @@ function App() {
   };
 
   const addAlert = async (alertData) => {
-    const paid = await handleAlertPayment();
-    if (paid) {
-      const newAlert = {
-        id: Date.now(),
-        ...alertData,
-        createdAt: new Date().toISOString(),
-        status: 'active'
-      };
-      setAlerts(prev => [...prev, newAlert]);
-      return true;
+    try {
+      const paid = await handleAlertPayment();
+      if (paid) {
+        await createAlert(alertData);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Failed to add alert:', error);
+      return false;
     }
-    return false;
+  };
+
+  // Handle transaction cost estimation
+  const handleTransactionCostEstimation = async (amount) => {
+    if (selectedAsset) {
+      try {
+        await estimateTransactionCosts(selectedAsset, amount);
+      } catch (error) {
+        console.error('Failed to estimate transaction costs:', error);
+      }
+    }
   };
 
   return (
@@ -115,12 +127,14 @@ function App() {
             <AlertsSection 
               alerts={alerts}
               onAddAlert={addAlert}
-              setAlerts={setAlerts}
             />
           )}
 
           {activeTab === 'costs' && (
-            <TransactionCosts selectedAsset={selectedAsset} />
+            <TransactionCosts 
+              selectedAsset={selectedAsset} 
+              onEstimate={handleTransactionCostEstimation}
+            />
           )}
         </main>
       </div>

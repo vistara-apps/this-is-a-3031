@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
-import { ExternalLink, Lock, Unlock, TrendingUp, TrendingDown } from 'lucide-react';
+import { ExternalLink, Lock, Unlock, TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
+import { useAsset } from '../context/AssetContext';
 
 const PriceComparison = ({ results, onPayment }) => {
   const [isPaid, setIsPaid] = useState(false);
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);
+  
+  // Use the asset context for additional functionality
+  const { isLoading } = useAsset();
 
   const handlePayment = async () => {
     setIsPaymentLoading(true);
@@ -17,6 +21,17 @@ const PriceComparison = ({ results, onPayment }) => {
     }
     setIsPaymentLoading(false);
   };
+
+  // If the component is in a loading state, show a loading indicator
+  if (isLoading) {
+    return (
+      <div className="glass-effect rounded-xl p-6 text-center">
+        <Loader2 className="w-12 h-12 text-white/50 mx-auto mb-4 animate-spin" />
+        <h3 className="text-xl font-semibold text-white mb-2">Loading Price Data</h3>
+        <p className="text-white/70">Fetching the latest prices across exchanges...</p>
+      </div>
+    );
+  }
 
   const sortedPrices = [...results.prices].sort((a, b) => a.price - b.price);
   const bestPrice = sortedPrices[0];
